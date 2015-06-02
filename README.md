@@ -28,17 +28,23 @@ DataSource implementation
 
 ```swift
 ///The attributed string for the title 
-func byStateTitleAttributedText( scrollView : UIScrollView ) -> NSAttributedString?
+func byStateTitleAttributedText( scrollView : UIScrollView ) -> NSAttributedString?{
+}
 ///The attributed string for the detail
-func byStateDetailAttributedText( scrollView : UIScrollView ) -> NSAttributedString?
+func byStateDetailAttributedText( scrollView : UIScrollView ) -> NSAttributedString?{
+}
 ///The image for the imageView 
-func byStateImage( scrollView : UIScrollView ) -> UIImage?
+func byStateImage( scrollView : UIScrollView ) -> UIImage?{
+}
 ///The button attributed string for the specified button 
-func byStateButtonAttributedText( scrollView : UIScrollView , forState : UIControlState) -> NSAttributedString?
+func byStateButtonAttributedText( scrollView : UIScrollView , forState : UIControlState) -> NSAttributedString?{
+}
 ///The colo for the loading state view color 
-func byStateLoaddingColor (scrollView : UIScrollView ) -> UIColor?
+func byStateLoaddingColor (scrollView : UIScrollView ) -> UIColor?{
+}
 ///The action for the button tapped action 
-func byStateAction (scrollView : UIScrollView )
+func byStateAction (scrollView : UIScrollView ){
+}
 ```
 
 Set `byState` ( `.Default` ,`.Loading`,`.Event`)
