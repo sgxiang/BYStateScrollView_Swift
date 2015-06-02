@@ -242,24 +242,6 @@ private class BYDataView : UIView{
 }
 
 
-
-private class BYClosureWrapper <T> : NSObject {
-    
-    let _callback : [T]
-    
-    init(_ callback : T ) {
-        _callback = [callback]
-    }
-    
-    var call : T {
-        get{
-            return _callback[0]
-        }
-    }
-    
-}
-
-
 public extension UIScrollView{
     
     public var byStateDataSource : BYStateDataSource?{
