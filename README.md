@@ -56,9 +56,9 @@ You also can use `reloadBYStateView` method to reload tableView/collectonView
 
 ## Communication
 
-- Found a bug or have a feature request? [Open an issue](https://github.com/sgxiang/YTKKeyValueStore_Swift/issues).
+- Found a bug or have a feature request? [Open an issue](https://github.com/sgxiang/BYStateScrollView_Swift/issues).
 
-- Want to contribute? [Submit a pull request](https://github.com/sgxiang/YTKKeyValueStore_Swift/pulls).
+- Want to contribute? [Submit a pull request](https://github.com/sgxiang/BYStateScrollView_Swift/pulls).
 
 ## Author
 
