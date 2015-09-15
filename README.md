@@ -1,58 +1,73 @@
 # BYStateScrollView_Swift
 ==============
 
-Easy to showing some empty state view for UITableView/UICollectionView
+自定义UITableView/UICollectionView为空和刷新的状态
 
-Refer to this article : [DZNEmptyDataSet](https://github.com/dzenbot/DZNEmptyDataSet)
+参考 : [DZNEmptyDataSet](https://github.com/dzenbot/DZNEmptyDataSet)
 
 ![License MIT](https://go-shields.herokuapp.com/license-MIT-blue.png)
 
-## Screenshot
+## 要求
+
+* iOS 7.0+
+* Xcode 7.0
+* Swift 2.0
+
+## 截图
 
 ![](byState.gif)
 
 
-## Usage 
+## 用法 
 
-Conform to datasource
+设置UITableView/UICollectionView的数据代理： 
 
 ```swift
-override func viewDidLoad() {
-	super.viewDidLoad()
-	tableView.tableFooterView = UIView()
-	tableView.byStateDataSource = self
+class SomeTableViewController : UITableViewController , BYStateDataSource,BYStateDelegate{
+	override func viewDidLoad() {
+		super.viewDidLoad()
+    	//...
+		tableView.byStateDataSource = self
+        tableView.byStateDelegate = self
+    	//...
+	}
 }
 ```
 
-DataSource implementation
+数据源的实现：
 
 ```swift
-///The attributed string for the title 
+//设置标题的文本
 func byStateTitleAttributedText( scrollView : UIScrollView ) -> NSAttributedString?{
 }
-///The attributed string for the detail
+//设置具体内容的文本
 func byStateDetailAttributedText( scrollView : UIScrollView ) -> NSAttributedString?{
 }
-///The image for the imageView 
+//设置图片
 func byStateImage( scrollView : UIScrollView ) -> UIImage?{
 }
-///The button attributed string for the specified button 
+//设置按钮文本
 func byStateButtonAttributedText( scrollView : UIScrollView , forState : UIControlState) -> NSAttributedString?{
 }
-///The colo for the loading state view color 
-func byStateLoaddingColor (scrollView : UIScrollView ) -> UIColor?{
-}
-///The action for the button tapped action 
-func byStateAction (scrollView : UIScrollView ){
+//自定义配置按钮
+func byStateCustomButton( scrollView : UIScrollView , button : UIButton?){
 }
 ```
 
-Set `byState` ( `.Default` ,`.Loading`,`.Event`)
+代理的实现：
 
-* `.Loading` : showing loading view ( tableView/collectionView items is empty)
-* `.Event` : showing empty view   ( tableView/collectionView items is empty)
+```swift
+//视图的按钮事件的实现
+func byStateTapAction (scrollView : UIScrollView ){
+}
+```
 
-You also can use `reloadBYStateView` method to reload tableView/collectonView
+设置视图的 `byState` (`.Loading`,`.Custom`) 来让视图显示不同的状态。
+
+* `tableView.byState = .Loading` : 设置视图在刷新状态（表单的数据必须为空）
+* `tableView.byState = .Custom` : 设置视图为自定义配置的状态（表单的数据必须为空）
+
+设置完成之后调用`reloadData`方法去刷新视图。
 
 ## Communication
 

@@ -8,287 +8,87 @@
 
 import UIKit
 
-private var stateKey : UInt8 = 0
-private var viewKey : UInt8 = 0
-private var dataSourceKey : UInt8 = 0
+//private var stateKey : UInt8 = 0
+//private var viewKey : UInt8 = 0
+//private var dataSourceKey : UInt8 = 0
+//private var delegateKey : UInt8 = 0
 
 public enum BYState : Int{
-    case Default = 0
-    case Loading = 1
-    case Event = 2
+    case Loading = 0
+    case Custom = 1
+}
+
+@objc public protocol BYStateDelegate {
+    func byStateTapAction (scrollView : UIScrollView )
 }
 
 @objc public protocol BYStateDataSource : NSObjectProtocol {
-    
     @objc optional func byStateTitleAttributedText( scrollView : UIScrollView ) -> NSAttributedString?
     @objc optional func byStateDetailAttributedText( scrollView : UIScrollView ) -> NSAttributedString?
     @objc optional func byStateImage( scrollView : UIScrollView ) -> UIImage?
     @objc optional func byStateButtonAttributedText( scrollView : UIScrollView , forState : UIControlState) -> NSAttributedString?
-    @objc optional func byStateLoaddingColor (scrollView : UIScrollView ) -> UIColor?
-    @objc optional func byStateAction (scrollView : UIScrollView )
-    
+    @objc optional func byStateCustomButton( scrollView : UIScrollView , button : UIButton?)
 }
-
-
-private class BYDataView : UIView{
-    
-    lazy var contentView : UIView? = {
-        let cv = UIView()
-        cv.setTranslatesAutoresizingMaskIntoConstraints(false)
-        cv.backgroundColor = UIColor.clearColor()
-        cv.userInteractionEnabled = true
-        cv.alpha = 0
-        return cv
-    }()
-    
-    
-    var titleLabel : UILabel?
-    var detailLabel : UILabel?
-    var imageView : UIImageView?
-    var button : UIButton?
-    var activityView : UIActivityIndicatorView?
-    
-    var useLoading = false
-    
-    var dataViewAction : (()->())?
-    
-    init(){
-        super.init(frame:CGRectZero)
-        self.addSubview(contentView!)
-    }
-    
-    private func setupDetailView(){
-        
-        if useLoading{
-            activityView = UIActivityIndicatorView(activityIndicatorStyle: UIActivityIndicatorViewStyle.Gray)
-            activityView?.startAnimating()
-            contentView?.addSubview(activityView!)
-        }else{
-            
-            if titleLabel == nil{
-                titleLabel = UILabel()
-                titleLabel?.setTranslatesAutoresizingMaskIntoConstraints(false)
-                titleLabel?.backgroundColor = UIColor.clearColor()
-                titleLabel?.font = UIFont.systemFontOfSize(27)
-                titleLabel?.textColor = UIColor(white: 0.6, alpha: 1)
-                titleLabel?.textAlignment = .Center
-                titleLabel?.lineBreakMode = .ByWordWrapping
-                titleLabel?.numberOfLines = 2
-                titleLabel?.accessibilityLabel = "empty set title label"
-                contentView?.addSubview(titleLabel!)
-            }
-            if detailLabel == nil{
-                detailLabel = UILabel()
-                detailLabel?.setTranslatesAutoresizingMaskIntoConstraints(false)
-                detailLabel?.backgroundColor = UIColor.clearColor()
-                detailLabel?.font = UIFont.systemFontOfSize(17)
-                detailLabel?.textColor = UIColor(white: 0.6, alpha: 1)
-                detailLabel?.textAlignment = .Center
-                detailLabel?.lineBreakMode = .ByWordWrapping
-                detailLabel?.numberOfLines = 0
-                detailLabel?.accessibilityLabel = "empty set detail label"
-                contentView?.addSubview(detailLabel!)
-            }
-            if imageView == nil{
-                imageView = UIImageView()
-                imageView?.setTranslatesAutoresizingMaskIntoConstraints(false)
-                imageView?.backgroundColor = UIColor.clearColor()
-                imageView?.contentMode = .ScaleAspectFit
-                imageView?.userInteractionEnabled = false
-                imageView?.accessibilityLabel = "empty set background image"
-                contentView?.addSubview(imageView!)
-            }
-            if button == nil{
-                button = UIButton.buttonWithType(.Custom) as? UIButton
-                button?.setTranslatesAutoresizingMaskIntoConstraints(false)
-                button?.backgroundColor = UIColor.clearColor()
-                button?.contentHorizontalAlignment = .Center
-                button?.contentVerticalAlignment = .Center
-                button?.accessibilityLabel = "empty set button"
-                button?.addTarget(self, action: "didTapButton:", forControlEvents: .TouchUpInside)
-                contentView?.addSubview(button!)
-            }
-            
-        }
-        
-    }
-
-
-    required init(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    private override func didMoveToSuperview() {
-        self.frame = self.superview?.bounds ?? CGRectZero
-        UIView.animateWithDuration(0.25, animations: { () -> Void in
-            self.contentView?.alpha = 1.0
-        }, completion: nil)
-    }
-    
-    
-    private func canShowImage()->Bool{
-        return imageView?.image != nil && imageView?.superview != nil
-    }
-    private func canShowTitle()->Bool{
-        return titleLabel?.attributedText?.length > 0 && titleLabel?.superview != nil
-    }
-    private func canShowDetail()->Bool{
-        return detailLabel?.attributedText?.length > 0 && detailLabel?.superview != nil
-    }
-    private func canShowButton()->Bool{
-        return button?.attributedTitleForState(.Normal)?.length > 0 && button?.superview != nil
-    }
-    
-    @objc private func didTapButton(sender : UIButton){
-        dataViewAction?()
-    }
-    
-    func removeAllSubviews(){
-        titleLabel?.removeFromSuperview()
-        detailLabel?.removeFromSuperview()
-        imageView?.removeFromSuperview()
-        button?.removeFromSuperview()
-        activityView?.removeFromSuperview()
-        titleLabel = nil
-        detailLabel = nil
-        imageView = nil
-        button = nil
-        activityView = nil
-    }
-    
-    func removeAllConstraints(){
-        self.removeConstraints(self.constraints())
-        contentView?.removeConstraints(contentView!.constraints())
-    }
-    
-    private override func updateConstraintsIfNeeded() {
-        super.updateConstraintsIfNeeded()
-    }
-    private override func updateConstraints() {
-        
-        removeAllConstraints()
-        
-        var views : Dictionary<String,AnyObject> = Dictionary()
-        views["self"] = self
-        views["contentView"] = self.contentView
-        
-        self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:[self]-(<=0)-[contentView]", options: .AlignAllCenterY, metrics: nil, views: views))
-        self.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:[self]-(<=0)-[contentView]", options: .AlignAllCenterX, metrics: nil, views: views))
-        
-        
-        if useLoading{
-            views["activityView"] = activityView
-            contentView?.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|[activityView]|", options: NSLayoutFormatOptions(0), metrics: nil, views: views))
-            contentView?.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:|[activityView]|", options: NSLayoutFormatOptions(0), metrics: nil, views: views))
-            return super.updateConstraints()
-        }
-        
-        let width = CGRectGetWidth(self.frame)
-        let padding = 20
-        let imgWidth = imageView?.image?.size.width ?? 0
-        let imgHeight = imageView?.image?.size.height ?? 0
-        let trailing = width - imgWidth / 2.0
-        
-        let metrics : Dictionary<String,AnyObject> = [
-            "padding" : padding,
-            "imgWidth" : imgWidth,
-            "imgHeight" : imgHeight,
-            "trailing" : trailing
-        ]
-        
-        var verticalSubviews : NSMutableArray = NSMutableArray()
-        
-        if imageView?.superview != nil{
-            views["imageView"] = imageView
-            verticalSubviews.addObject("[imageView(imgHeight)]")
-            contentView?.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-trailing-[imageView(imgWidth)]-trailing-|", options: NSLayoutFormatOptions(0) , metrics: metrics, views: views))
-        }
-        if self.canShowTitle(){
-            views["titleLabel"] = titleLabel
-            verticalSubviews.addObject("[titleLabel]")
-            contentView?.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-padding-[titleLabel]-padding-|", options: NSLayoutFormatOptions(0), metrics: metrics, views: views))
-        }else{
-            titleLabel?.removeFromSuperview()
-            titleLabel = nil
-        }
-        
-        if self.canShowDetail(){
-            views["detailLabel"] = detailLabel
-            verticalSubviews.addObject("[detailLabel]")
-            self.contentView?.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-padding-[detailLabel]-padding-|", options: NSLayoutFormatOptions(0), metrics: metrics, views: views))
-        }else{
-            detailLabel?.removeFromSuperview()
-            detailLabel = nil
-        }
-        
-        if self.canShowButton(){
-            views["button"] = button
-            verticalSubviews.addObject("[button]")
-            self.contentView?.addConstraint(NSLayoutConstraint(item: button!, attribute: .CenterX, relatedBy: .Equal, toItem: contentView, attribute: .CenterX, multiplier: 1, constant: 0))
-        }else{
-            button?.removeFromSuperview()
-            button = nil
-        }
-        
-        let verticalFormat = verticalSubviews.componentsJoinedByString("-(11.0)-")
-        
-        if count(verticalFormat) > 0{
-            contentView?.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:|" + verticalFormat + "|", options: NSLayoutFormatOptions(0), metrics: metrics, views: views))
-        }
-        
-        super.updateConstraints()
-        
-    }
-}
-
 
 public extension UIScrollView{
     
+    private struct AssociatedKeys {
+        static var StateKey = "StateKey"
+        static var ViewKey = "ViewKey"
+        static var DataSourceKey = "DataSourceKey"
+        static var DelegateKey = "DelegateKey"
+    }
+    
     public var byStateDataSource : BYStateDataSource?{
         get{
-            return objc_getAssociatedObject(self, &dataSourceKey) as? BYStateDataSource
+            return objc_getAssociatedObject(self, &AssociatedKeys.DataSourceKey) as? BYStateDataSource
         }
         set{
-            objc_setAssociatedObject(self, &dataSourceKey, newValue, UInt(OBJC_ASSOCIATION_RETAIN_NONATOMIC))
+            objc_setAssociatedObject(self, &AssociatedKeys.DataSourceKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
+    }
+    
+    public var byStateDelegate : BYStateDelegate?{
+        get{
+            return objc_getAssociatedObject(self, &AssociatedKeys.DelegateKey) as? BYStateDelegate
+        }
+        set{
+            objc_setAssociatedObject(self, &AssociatedKeys.DelegateKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
     }
     
     private var dataView : BYDataView?{
         get{
-            var view = objc_getAssociatedObject(self, &viewKey) as? BYDataView
+            var view = objc_getAssociatedObject(self, &AssociatedKeys.ViewKey) as? BYDataView
             if view == nil{
-                view = BYDataView()
-                view?.autoresizingMask = UIViewAutoresizing.FlexibleWidth | UIViewAutoresizing.FlexibleHeight
-                view?.hidden = true
+                view = NSBundle.mainBundle().loadNibNamed("BYDataView", owner: nil, options: nil)[0] as? BYDataView
                 self.dataView = view
             }
             return view
         }
         set{
-            objc_setAssociatedObject(self, &viewKey, newValue, UInt(OBJC_ASSOCIATION_RETAIN_NONATOMIC))
+            objc_setAssociatedObject(self, &AssociatedKeys.ViewKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
     }
     
     public var byState : BYState?{
         get{
-            return BYState(rawValue: objc_getAssociatedObject(self, &stateKey) as! Int)
+            return BYState(rawValue: objc_getAssociatedObject(self, &AssociatedKeys.StateKey) as! Int)
         }
         set{
-            objc_setAssociatedObject(self, &stateKey, newValue!.rawValue, UInt(OBJC_ASSOCIATION_COPY))
-            reloadBYStateView()
+            objc_setAssociatedObject(self, &AssociatedKeys.StateKey, newValue!.rawValue, .OBJC_ASSOCIATION_COPY)
         }
     }
     
-    public func reloadBYStateView(){
+    internal func reloadBYStateView(){
         
-        (self as? UITableView)?.reloadData()
-        (self as? UICollectionView)?.reloadData()
+//        (self as? UITableView)?.reloadData()
+//        (self as? UICollectionView)?.reloadData()
         
-        if byState == .Default || itemCount() > 0{
-            dataView?.removeAllSubviews()
+        if itemCount() > 0{
             dataView?.removeFromSuperview()
+            dataView = nil
         }else{
-            
             let view = self.dataView
             if view?.superview == nil{
                 if self.isKindOfClass(UITableView.self) || self.isKindOfClass(UICollectionView.self) && self.subviews.count > 1{
@@ -297,39 +97,30 @@ public extension UIScrollView{
                     self.addSubview(view!)
                 }
             }
-            view?.removeAllSubviews()
-        
-            view?.useLoading = byState == .Loading
-            view?.setupDetailView()
             
-            if byState == .Event && byStateDataSource != nil{
-                
-                view?.detailLabel?.attributedText = byStateDataSource?.byStateTitleAttributedText?(self)
-                view?.titleLabel?.attributedText = byStateDataSource?.byStateDetailAttributedText?(self)
+            view?.frame = view?.superview?.frame ?? CGRectZero
+            
+            view?.useLoading = byState == .Loading
+            
+            if byState == .Custom && byStateDataSource != nil{
+                view?.titleLabel?.attributedText = byStateDataSource?.byStateTitleAttributedText?(self)
+                view?.detailLabel?.attributedText = byStateDataSource?.byStateDetailAttributedText?(self)
                 view?.imageView?.image = byStateDataSource?.byStateImage?(self)
                 
+                let buttonNormalTitle = byStateDataSource?.byStateButtonAttributedText?(self, forState: .Normal) ?? NSAttributedString()
+                view?.button?.setAttributedTitle(buttonNormalTitle, forState: .Normal)
                 
-                if let str = byStateDataSource?.byStateButtonAttributedText?(self, forState: .Normal){
-                    view?.button?.setAttributedTitle(str, forState: .Normal)
-                }
-                if let str = byStateDataSource?.byStateButtonAttributedText?(self, forState: .Highlighted){
-                    view?.button?.setAttributedTitle(str, forState: .Highlighted)
+                let buttonHighlightedTitle = byStateDataSource?.byStateButtonAttributedText?(self, forState: .Highlighted) ?? NSAttributedString()
+                view?.button?.setAttributedTitle(buttonHighlightedTitle, forState: .Highlighted)
+                
+                view?.tapButtonAction = {
+                    byStateDelegate?.byStateTapAction(self)
                 }
                 
-                view?.dataViewAction = {
-                    byStateDataSource?.byStateAction?(self)
-                }
-        
+                byStateDataSource?.byStateCustomButton?(self, button: view?.button)
             }
             
-            view?.activityView?.color = byStateDataSource?.byStateLoaddingColor?(self)
-            
-            
-            view?.hidden = false
-            view?.layoutIfNeeded()
-            view?.userInteractionEnabled = true
-            
-            view?.updateConstraints()
+            view?.setup()
             
         }
     }
@@ -354,5 +145,71 @@ public extension UIScrollView{
         return items
     }
     
+    
+}
+
+
+extension UITableView{
+    
+    public override class func initialize(){
+        struct Static{
+            static var token : dispatch_once_t = 0
+        }
+        
+        dispatch_once(&Static.token) { () -> Void in
+            let originalSelector = Selector("reloadData")
+            let swizzledSelector = Selector("nsh_reloadData")
+            
+            let originalMethod = class_getInstanceMethod(self, originalSelector)
+            let swizzledMethod = class_getInstanceMethod(self, swizzledSelector)
+            
+            let didAddMethod = class_addMethod(self, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod))
+            
+            if didAddMethod{
+                class_replaceMethod(self, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod))
+            }else{
+                method_exchangeImplementations(originalMethod, swizzledMethod)
+            }
+            
+        }
+    }
+    
+    func nsh_reloadData(){
+        self.nsh_reloadData()
+        self.reloadBYStateView()
+    }
+    
+}
+
+
+extension UICollectionView{
+    
+    public override class func initialize(){
+        struct Static{
+            static var token : dispatch_once_t = 0
+        }
+        
+        dispatch_once(&Static.token) { () -> Void in
+            let originalSelector = Selector("reloadData")
+            let swizzledSelector = Selector("nsh_reloadData")
+            
+            let originalMethod = class_getInstanceMethod(self, originalSelector)
+            let swizzledMethod = class_getInstanceMethod(self, swizzledSelector)
+            
+            let didAddMethod = class_addMethod(self, originalSelector, method_getImplementation(swizzledMethod), method_getTypeEncoding(swizzledMethod))
+            
+            if didAddMethod{
+                class_replaceMethod(self, swizzledSelector, method_getImplementation(originalMethod), method_getTypeEncoding(originalMethod))
+            }else{
+                method_exchangeImplementations(originalMethod, swizzledMethod)
+            }
+            
+        }
+    }
+    
+    func nsh_reloadData(){
+        self.nsh_reloadData()
+        self.reloadBYStateView()
+    }
     
 }

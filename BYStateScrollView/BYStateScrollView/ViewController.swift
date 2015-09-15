@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource,BYStateDataSource {
+class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource,BYStateDataSource,BYStateDelegate {
 
     var row = 0
     var isError = false
@@ -17,11 +17,13 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     override func viewDidLoad() {
         super.viewDidLoad()
         self.edgesForExtendedLayout = .None
+        
         tableView.dataSource = self
         tableView.delegate = self
         tableView.tableFooterView = UIView()
         tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier: "cell")
         tableView.byStateDataSource = self
+        tableView.byStateDelegate = self
         
         let load = UIBarButtonItem(title: "刷新", style: .Plain, target: self, action: "testError")
         self.navigationItem.rightBarButtonItem = load
@@ -30,10 +32,11 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         self.navigationItem.leftBarButtonItem = remove
         
         tableView.byState = .Loading
+        self.tableView.reloadData()
         
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (Int64)(3 * NSEC_PER_SEC)), dispatch_get_main_queue()) { () -> Void in
             self.row = 100
-            self.tableView.byState = .Default
+            self.tableView.reloadData()
         }
         
     }
@@ -43,20 +46,21 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         row = 0
         
         tableView.byState = .Loading
+        tableView.reloadData()
         
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (Int64)(3 * NSEC_PER_SEC)), dispatch_get_main_queue()) { () -> Void in
             self.isError = true
-            self.tableView.byState = .Event
+            self.tableView.byState = .Custom
+            self.tableView.reloadData()
         }
         
     }
     
     func testRemove(){
-        
         row = 0
         isError = false
-        tableView.byState = .Event
-        
+        tableView.byState = .Custom
+        tableView.reloadData()
     }
 
     
@@ -67,7 +71,7 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         return row
     }
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let cell : UITableViewCell = tableView.dequeueReusableCellWithIdentifier("cell") as! UITableViewCell
+        let cell : UITableViewCell = tableView.dequeueReusableCellWithIdentifier("cell")!
         cell.textLabel?.text = "\(indexPath.row)"
         return cell
     }
@@ -76,7 +80,7 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     
     func byStateButtonAttributedText(scrollView: UIScrollView, forState: UIControlState) -> NSAttributedString? {
         if isError{
-            return NSAttributedString(string: "重新加载", attributes: [NSFontAttributeName:UIFont.systemFontOfSize(14),NSForegroundColorAttributeName:UIColor.blueColor()])
+            return NSAttributedString(string: " 重新加载 ", attributes: [NSFontAttributeName:UIFont.systemFontOfSize(14),NSForegroundColorAttributeName:UIColor.grayColor()])
         }
         return nil
     }
@@ -107,9 +111,19 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
             return NSAttributedString(string: "没有更多数据了", attributes: [NSFontAttributeName:UIFont.systemFontOfSize(18),NSForegroundColorAttributeName:UIColor.blackColor()])
         }
     }
-    func byStateAction(scrollView: UIScrollView) {
-        row = 100
-        tableView.byState = .Default
+    
+    func byStateCustomButton(scrollView: UIScrollView, button: UIButton?) {
+        button?.layer.borderColor = UIColor.grayColor().CGColor
+        button?.layer.borderWidth = 1.0
+        button?.layer.cornerRadius = 4
     }
+    
+    //MARK: - state delegate
+    
+    func byStateTapAction(scrollView: UIScrollView) {
+        row = 100
+        tableView.reloadData()
+    }
+
 }
 
